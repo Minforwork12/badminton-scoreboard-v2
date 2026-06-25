@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Scoreboard App - Ultimate BWF Layering</title>
+    <style>
+        /* --- CSS: จัดตกแต่งหน้าตาสกอร์บอร์ด --- */
+        body {
+            font-family: 'Arial Narrow', Arial, sans-serif;
+            background-color: #050510;
+            margin: 0;
+            padding: 40px 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* กล่องคลุมสกอร์บอร์ดทั้งหมด */
+        .scoreboard-wrapper {
+            display: flex;
+            align-items: flex-start;
+            width: 100%;
+            max-width: 1050px;
+            filter: drop-shadow(0 15px 25px rgba(0,0,0,0.6));
+        }
+
+        /* --- ฝั่งซ้าย 1: ขอบเงิน (Outer Metallic Rim) --- */
+        .scoreboard-left-rim {
+            flex-grow: 1;
+            background: linear-gradient(to bottom, #f2e4e6 0%, #c4b0b3 100%);
+            padding: 4px 0 4px 4px; 
+            border-top-left-radius: 22px;
+            border-bottom-left-radius: 4px;
+            box-shadow: inset 1px 1px 3px rgba(255,255,255,0.8), 5px 0 10px rgba(0,0,0,0.25);
+            z-index: 2;
+        }
+
+        /* --- ฝั่งซ้าย 2: กระดานด้านใน (ตัดขอบธง) --- */
+        .scoreboard-inner {
+            border-top-left-radius: 18px;
+            border-bottom-left-radius: 2px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* แถวข้อมูลนักกีฬา */
+        .row {
+            display: flex;
+            height: 85px; 
+            border-bottom: 2px solid #c29198;
+            box-sizing: border-box;
+            /* ลูกศรสีฟ้า: Layer พื้นหลังสีขาวสำหรับชื่อนักกีฬา */
+            background: linear-gradient(to bottom, #ffffff 0%, #ececec 100%); 
+        }
+        .row:last-child { 
+            border-bottom: none; 
+        }
+
+        .country-box {
+            width: 15%;
+            min-width: 130px;
+            background: linear-gradient(to bottom, #f03240 0%, #ce121e 50%, #9e0610 100%);
+            display: flex;
+            clip-path: polygon(0 0, 80% 0, 100% 100%, 0 100%);
+        }
+
+        .flag-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: left;
+        }
+
+        .name-area {
+            flex-grow: 1;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+        }
+
+        .player-name {
+            font-size: 45px;
+            font-weight: bold;
+            color: #111;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .serve-indicator {
+            width: 35px;
+            height: 35px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            visibility: hidden;
+        }
+        .is-serving .serve-indicator { visibility: visible; }
+
+        .past-sets-container {
+            display: flex;
+            height: 100%;
+        }
+
+        /* ลูกศรสีเขียว: Layer เซ็ตที่ผ่านมา (สีชมพูตุ่นๆ แยกจากสีขาวชัดเจน) */
+        .past-score {
+            width: 75px; /* ล็อกความกว้างให้เซ็ต 1, 2, 3 เท่ากันเป๊ะ 100% */
+            flex-shrink: 0; /* ห้ามหดเด็ดขาด */
+            height: 100%; /* ล็อกความสูงเท่ากับแถว */
+            background: linear-gradient(to bottom, #fae1e5 0%, #dfbac0 100%); /* สีพื้นผิวใหม่ */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 42px;
+            color: #1a1a1a;
+            border-left: 2px solid #ffffff; /* เส้นคั่นสีขาวแบบในรูปเป๊ะๆ */
+            box-sizing: border-box;
+        }
+
+        /* --- ฝั่งขวา: แผ่นหลังสีแดงเข้ม + กล่องคะแนน --- */
+        .scoreboard-right-backplate {
+            background: #5a0008;
+            padding: 0 6px 6px 0; 
+            margin-top: 4px; 
+            margin-left: -2px; 
+            display: flex;
+            flex-direction: column;
+            gap: 2px; 
+            border-top-right-radius: 4px;
+            border-bottom-right-radius: 6px;
+            z-index: 1;
+        }
+
+        .current-score {
+            width: 110px;
+            height: 85px; 
+            background: linear-gradient(to bottom, #f63c4a 0%, #d81421 45%, #b00b17 100%);
+            color: white;
+            font-weight: bold;
+            font-size: 65px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-top: 1px solid #ff9fa8;
+            border-left: 1px solid #ff9fa8;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            box-sizing: border-box;
+        }
+
+        /* --- CSS: ส่วนของกรรมการ --- */
+        .controls {
+            margin-top: 50px;
+            padding: 20px;
+            background: #222;
+            color: white;
+            border-radius: 8px;
+            width: 100%;
+            max-width: 1000px;
+            box-sizing: border-box;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+        }
+        .control-row {
+            margin-bottom: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 10px;
+        }
+        input, select { padding: 10px; font-size: 18px; border-radius: 4px; border: 1px solid #555; }
+        .btn-score { background-color: #ce121e; color: white; border: none; border-radius: 8px; font-weight: bold; font-size: 24px; width: 50px; height: 50px; cursor: pointer; }
+        .btn-action { background-color: #3b5998; color: white; border: none; border-radius: 8px; padding: 12px 20px; font-weight: bold; font-size: 18px; cursor: pointer; }
+        .btn-action:active, .btn-score:active { transform: scale(0.95); }
+        .btn-reset { background-color: #666; }
+    </style>
+</head>
+<body>
+
+    <div class="scoreboard-wrapper">
+        
+        <div class="scoreboard-left-rim">
+            <div class="scoreboard-inner">
+                <div class="row" id="player1-row">
+                    <div class="country-box">
+                        <img id="p1-flag-disp" class="flag-img" src="" alt="flag">
+                    </div>
+                    <div class="name-area">
+                        <span class="player-name" id="p1-name-disp"></span>
+                        <div class="serve-indicator">
+                            <svg width="35" height="35" viewBox="0 0 20 20" style="transform: rotate(45deg);">
+                                <polygon fill="#ce121e" points="4,4 16,4 12,14 8,14"/>
+                                <circle fill="#ce121e" cx="10" cy="16" r="3"/>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="past-sets-container" id="p1-past-sets"></div>
+                </div>
+
+                <div class="row" id="player2-row">
+                    <div class="country-box">
+                        <img id="p2-flag-disp" class="flag-img" src="" alt="flag">
+                    </div>
+                    <div class="name-area">
+                        <span class="player-name" id="p2-name-disp"></span>
+                        <div class="serve-indicator">
+                            <svg width="35" height="35" viewBox="0 0 20 20" style="transform: rotate(45deg);">
+                                <polygon fill="#ce121e" points="4,4 16,4 12,14 8,14"/>
+                                <circle fill="#ce121e" cx="10" cy="16" r="3"/>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="past-sets-container" id="p2-past-sets"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="scoreboard-right-backplate">
+            <div class="current-score" id="p1-curr-disp">0</div>
+            <div class="current-score" id="p2-curr-disp">0</div>
+        </div>
+
+    </div>
+
+    <div class="controls">
+        <div class="control-row">
+            <strong>ผู้เล่นบน:</strong>
+            <input type="text" id="input-p1-name" value="PLAYER 1" placeholder="ชื่อนักกีฬา" oninput="updateUI()" style="width: 150px;">
+            <select id="input-p1-code" onchange="updateUI()">
+                <option value="th" selected>ไทย (THA)</option>
+                <option value="cn">จีน (CHN)</option>
+                <option value="my">มาเลเซีย (MAS)</option>
+                <option value="jp">ญี่ปุ่น (JPN)</option>
+                <option value="kr">เกาหลีใต้ (KOR)</option>
+                <option value="id">อินโดนีเซีย (INA)</option>
+                <option value="tw">ไต้หวัน (TPE)</option>
+                <option value="in">อินเดีย (IND)</option>
+                <option value="dk">เดนมาร์ก (DEN)</option>
+            </select>
+            <button class="btn-score" onclick="changeScore(1, -1)">-</button>
+            <button class="btn-score" onclick="changeScore(1, 1)">+</button>
+            <button class="btn-action" onclick="setServing(1)">ให้เสิร์ฟ 🏸</button>
+        </div>
+
+        <div class="control-row">
+            <strong>ผู้เล่นล่าง:</strong>
+            <input type="text" id="input-p2-name" value="PLAYER 2" placeholder="ชื่อนักกีฬา" oninput="updateUI()" style="width: 150px;">
+            <select id="input-p2-code" onchange="updateUI()">
+                <option value="th" selected>ไทย (THA)</option>
+                <option value="cn">จีน (CHN)</option>
+                <option value="my">มาเลเซีย (MAS)</option>
+                <option value="jp">ญี่ปุ่น (JPN)</option>
+                <option value="kr">เกาหลีใต้ (KOR)</option>
+                <option value="id">อินโดนีเซีย (INA)</option>
+                <option value="tw">ไต้หวัน (TPE)</option>
+                <option value="in">อินเดีย (IND)</option>
+                <option value="dk">เดนมาร์ก (DEN)</option>
+            </select>
+            <button class="btn-score" onclick="changeScore(2, -1)">-</button>
+            <button class="btn-score" onclick="changeScore(2, 1)">+</button>
+            <button class="btn-action" onclick="setServing(2)">ให้เสิร์ฟ 🏸</button>
+        </div>
+
+        <hr style="border-color: #444;">
+        <div class="control-row" style="justify-content: center;">
+            <button class="btn-action" onclick="endSet()" style="background-color: #28a745;">จบเซ็ต (End Set)</button>
+            <button class="btn-action btn-reset" onclick="resetMatch()">เริ่มแมตช์ใหม่</button>
+        </div>
+    </div>
+
+    <script>
+        let currentScoreP1 = 0;
+        let currentScoreP2 = 0;
+        let pastSets = []; 
+
+        updateUI();
+
+        function updateUI() {
+            document.getElementById('p1-name-disp').innerText = document.getElementById('input-p1-name').value;
+            document.getElementById('p2-name-disp').innerText = document.getElementById('input-p2-name').value;
+
+            let p1Code = document.getElementById('input-p1-code').value;
+            document.getElementById('p1-flag-disp').src = `https://flagcdn.com/w160/${p1Code}.png`;
+            
+            let p2Code = document.getElementById('input-p2-code').value;
+            document.getElementById('p2-flag-disp').src = `https://flagcdn.com/w160/${p2Code}.png`;
+
+            let p1PastHtml = "";
+            let p2PastHtml = "";
+            pastSets.forEach(set => {
+                p1PastHtml += `<div class="past-score">${set.p1}</div>`;
+                p2PastHtml += `<div class="past-score">${set.p2}</div>`;
+            });
+            document.getElementById('p1-past-sets').innerHTML = p1PastHtml;
+            document.getElementById('p2-past-sets').innerHTML = p2PastHtml;
+
+            document.getElementById('p1-curr-disp').innerText = currentScoreP1;
+            document.getElementById('p2-curr-disp').innerText = currentScoreP2;
+        }
+
+        function changeScore(player, amount) {
+            if (player === 1) {
+                if (currentScoreP1 + amount >= 0) {
+                    currentScoreP1 += amount;
+                    if(amount > 0) setServing(1);
+                }
+            } else {
+                if (currentScoreP2 + amount >= 0) {
+                    currentScoreP2 += amount;
+                    if(amount > 0) setServing(2);
+                }
+            }
+            updateUI();
+        }
+
+        function setServing(player) {
+            document.getElementById('player1-row').classList.remove('is-serving');
+            document.getElementById('player2-row').classList.remove('is-serving');
+            if (player === 1) document.getElementById('player1-row').classList.add('is-serving');
+            else if (player === 2) document.getElementById('player2-row').classList.add('is-serving');
+        }
+
+        function endSet() {
+            if (currentScoreP1 === 0 && currentScoreP2 === 0) return;
+            pastSets.push({ p1: currentScoreP1, p2: currentScoreP2 });
+            currentScoreP1 = 0; currentScoreP2 = 0;
+            document.getElementById('player1-row').classList.remove('is-serving');
+            document.getElementById('player2-row').classList.remove('is-serving');
+            updateUI();
+        }
+
+        function resetMatch() {
+            if(confirm("แน่ใจหรือไม่ว่าต้องการเริ่มแมตช์ใหม่?")) {
+                currentScoreP1 = 0; currentScoreP2 = 0; pastSets = [];
+                document.getElementById('player1-row').classList.remove('is-serving');
+                document.getElementById('player2-row').classList.remove('is-serving');
+                updateUI();
+            }
+        }
+    </script>
+</body>
+</html>
